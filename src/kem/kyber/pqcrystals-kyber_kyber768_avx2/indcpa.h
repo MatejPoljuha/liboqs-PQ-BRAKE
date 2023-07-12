@@ -11,6 +11,11 @@ void gen_matrix(polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed);
 void indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
                     uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES]);
 
+#define indcpa_keypair_based_on_input KYBER_NAMESPACE(indcpa_keypair_based_on_input)
+void indcpa_keypair_based_on_input(uint8_t key_input[32],
+                                   uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+                                   uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES]);
+
 #define indcpa_enc KYBER_NAMESPACE(indcpa_enc)
 void indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
                 const uint8_t m[KYBER_INDCPA_MSGBYTES],
