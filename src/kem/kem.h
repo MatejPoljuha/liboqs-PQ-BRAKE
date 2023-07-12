@@ -220,6 +220,21 @@ OQS_API OQS_KEM *OQS_KEM_new(const char *method_name);
 OQS_API OQS_STATUS OQS_KEM_keypair(const OQS_KEM *kem, uint8_t *public_key, uint8_t *secret_key);
 
 /**
+ * MODIFIED Keypair generation algorithm - based on input.
+ *
+ * Caller is responsible for allocating sufficient memory for `public_key` and
+ * `secret_key`, based on the `length_*` members in this object or the per-scheme
+ * compile-time macros `OQS_KEM_*_length_*`.
+ *
+ * @param[in] key_input Pointer to input data.
+ * @param[in] kem The OQS_KEM object representing the KEM.
+ * @param[out] public_key The public key represented as a byte string.
+ * @param[out] secret_key The secret key represented as a byte string.
+ * @return OQS_SUCCESS or OQS_ERROR
+ */
+OQS_API OQS_STATUS OQS_KEM_keypair_based_on_input(uint8_t *key_input, const OQS_KEM *kem, uint8_t *public_key, uint8_t *secret_key);
+
+/**
  * Encapsulation algorithm.
  *
  * Caller is responsible for allocating sufficient memory for `ciphertext` and
