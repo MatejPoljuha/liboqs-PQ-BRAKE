@@ -33,6 +33,39 @@ int crypto_kem_keypair(uint8_t *pk,
 }
 
 /*************************************************
+* Name:        MODIFIED - crypto_kem_keypair - based on input
+*
+* Description: Generates public and private key
+*              for CCA-secure Kyber key encapsulation mechanism
+*
+* Arguments:   
+*              - uint8_t *key_input: pointer to input data
+*              - uint8_t *pk: pointer to output public key
+*                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
+*              - uint8_t *sk: pointer to output private key
+*                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
+*
+* Returns 0 (success)
+**************************************************/
+int crypto_kem_keypair_based_on_input(uint8_t *key_input,
+                                      uint8_t *pk,
+                                      uint8_t *sk)
+{
+    indcpa_keypair_based_on_input(key_input, pk, sk);
+    memcpy(sk+KYBER_INDCPA_SECRETKEYBYTES, pk, KYBER_INDCPA_PUBLICKEYBYTES);
+    hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+    /* Value z for pseudo-random output on reject */
+    // randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
+    uint8_t hash_of_y_x[2*KYBER_SYMBYTES];
+    int counter;
+    for (counter = 0; counter < 32; counter++) {
+        hash_of_y_x[counter]=key_input[counter];
+    }
+    memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,hash_of_y_x,KYBER_SYMBYTES);
+    return 0;
+}
+
+/*************************************************
 * Name:        crypto_kem_enc
 *
 * Description: Generates cipher text and shared
