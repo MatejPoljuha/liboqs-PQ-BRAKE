@@ -1,8 +1,9 @@
 [AppVeyor](https://ci.appveyor.com/project/dstebila/liboqs): ![Build status image](https://ci.appveyor.com/api/projects/status/9d2ts78x88r8wnii/branch/main?svg=true), [CircleCI](https://circleci.com/gh/open-quantum-safe/liboqs/tree/main): ![Build status image](https://circleci.com/gh/open-quantum-safe/liboqs/tree/main.svg?style=svg), [TravisCI](https://travis-ci.com/github/open-quantum-safe/liboqs): [![Build Status](https://travis-ci.com/open-quantum-safe/liboqs.svg?branch=main)](https://travis-ci.com/open-quantum-safe/liboqs)
 
-liboqs
+liboqs-PQ-BRAKE
 ======================
-
+Small experimental modifications that allow for generation of keypairs based on input.
+----------------------
 liboqs is an open source C library for quantum-safe cryptographic algorithms.
 
 - [Overview](#overview)
