@@ -397,6 +397,14 @@ OQS_API OQS_STATUS OQS_KEM_keypair(const OQS_KEM *kem, uint8_t *public_key, uint
 	}
 }
 
+OQS_API OQS_STATUS OQS_KEM_keypair_based_on_input(uint8_t *key_input, const OQS_KEM *kem, uint8_t *public_key, uint8_t *secret_key) {
+    if (kem == NULL) {
+        return OQS_ERROR;
+    } else {
+        return kem->keypair_based_on_input(key_input, public_key, secret_key);
+    }
+}
+
 OQS_API OQS_STATUS OQS_KEM_encaps(const OQS_KEM *kem, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key) {
 	if (kem == NULL) {
 		return OQS_ERROR;
