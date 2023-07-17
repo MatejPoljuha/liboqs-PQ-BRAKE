@@ -1,8 +1,36 @@
-[AppVeyor](https://ci.appveyor.com/project/dstebila/liboqs): ![Build status image](https://ci.appveyor.com/api/projects/status/9d2ts78x88r8wnii/branch/main?svg=true), [CircleCI](https://circleci.com/gh/open-quantum-safe/liboqs/tree/main): ![Build status image](https://circleci.com/gh/open-quantum-safe/liboqs/tree/main.svg?style=svg), [TravisCI](https://travis-ci.com/github/open-quantum-safe/liboqs): [![Build Status](https://travis-ci.com/open-quantum-safe/liboqs.svg?branch=main)](https://travis-ci.com/open-quantum-safe/liboqs)
-
 liboqs-PQ-BRAKE
 ======================
-Small experimental modifications that allow for generation of keypairs based on input.
+FORK INFORMATION:
+----------------------
+### Small experimental modifications that introduce some new functions for the Kyber768 KEM:
+- keypair generation based on input - ```crypto_kem_keypair_based_on_input```
+- CPA-only encapsulation/decapsulation - ```crypto_kem_enc_custom_secret_CPA```, ```crypto_kem_dec_custom_secret_CPA```
+- CCA encapsulation/decapsulation - ```crypto_kem_enc_custom_secret_CCA```, ```crypto_kem_dec_custom_secret_CCA```
+	- this just allows for setting the original message for the CPA portion of the protocol, the CCA additions still results in a randomized shared secret at the end
+
+### Modification instructions/log:
+Feel free to send me an email at if anything here is unclear, these are just a few basic tips about modifying this library on a basic level.
+
+- These new functions are only implemented for the Kyber768 KEM variant on systems that support the AVX2 instruction set. The original library uses compile-time flags/macros to determine which parts of the code are used when you compile the library. Porting these changes to Kyber512 or 1024 and other architectures should be possible by editing the same files in the respective folders for the desired architecture/Kyber version.
+- The files that are modified/need to be modified if you want to change something:
+	- ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/kem.c``` - the main bulk of changes are here and adding any other desired functions should be performed here
+ 	- ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/kem.h``` - the header for the above file, just add the function declarations here
+  	- ```src/kem/kyber/kem_kyber_768.c``` - API function definitions, there are macros here that check which architecture is present on the system and set which functions are called, if you wish to add another custom function, just copy paste an existing one and change the function name in the declaration and in whichever if condition you desire (which architecture)
+  	- ```src/kem/kyber/kem_kyber.h``` - header for the API, just function declarations
+  	- ```src/kem/kem.c``` - Higher level API function definitions, just copy paste an existing function and change the name
+  	- ```src/kem/kem.h``` - header for the higher level API, defines the main OQS_KEM object, just need to add the function declarations from the above file here
+  	- ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/indcpa.c``` - has the underlying CPA function definitions, same principle as in ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/kem.c```
+  	- ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/indcpa.h``` - header for the CPA functions, add declarations if adding new functions
+     	- ```tests/example_kem.c``` - a small test example for the CPA/CCA functions, output is empty by default - need you uncomment the print blocks in ```src/kem/kyber/pqcrystals-kyber_kyber768_avx2/kem.c``` to see the output
+- When using a wrapper (C++, Python, etc.), there is one file to edit:
+	- C++ (https://github.com/open-quantum-safe/liboqs-cpp/tree/main/include): oqs_cpp.hpp
+ 	- Python (https://github.com/open-quantum-safe/liboqs-python/blob/main/oqs/oqs.py): oqs.py
+	- these just have small functions that declare a few variables and call the underlying C function through the API:
+   		- C++: ```OQS_STATUS rv_ = C::OQS_KEM_encaps(kem_.get(), ciphertext.data(), shared_secret.data(), public_key.data());```
+     		- Python: ```rv = native().OQS_KEM_encaps(self._kem, ct.byref(ciphertext), ct.byref(shared_secret), my_public_key)```
+       		- simply change these to whatever new function you create or use the ones I made
+----------------------
+ORIGINAL REPO README BELOW:
 ----------------------
 liboqs is an open source C library for quantum-safe cryptographic algorithms.
 
