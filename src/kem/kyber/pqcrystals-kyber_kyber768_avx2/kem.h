@@ -38,7 +38,19 @@ int crypto_kem_keypair_based_on_input(uint8_t *key_input, uint8_t *pk, uint8_t *
 #define crypto_kem_enc KYBER_NAMESPACE(enc)
 int crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
 
+#define crypto_kem_enc_custom_secret_CCA KYBER_NAMESPACE(enc_custom_secret_CCA)
+int crypto_kem_enc_custom_secret_CCA(const uint8_t *input_message, uint8_t *ct, uint8_t *ss, const uint8_t *pk);
+
+#define crypto_kem_enc_custom_secret_CPA KYBER_NAMESPACE(enc_custom_secret_CPA)
+int crypto_kem_enc_custom_secret_CPA(const uint8_t *input_message, uint8_t *ct, uint8_t *ss, const uint8_t *pk);
+
 #define crypto_kem_dec KYBER_NAMESPACE(dec)
 int crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+
+#define crypto_kem_dec_custom_secret_CPA KYBER_NAMESPACE(dec_custom_secret_CPA)
+int crypto_kem_dec_custom_secret_CPA(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+
+#define crypto_kem_dec_custom_secret_CCA KYBER_NAMESPACE(dec_custom_secret_CCA)
+int crypto_kem_dec_custom_secret_CCA(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
 
 #endif

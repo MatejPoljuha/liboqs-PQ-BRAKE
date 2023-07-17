@@ -413,12 +413,44 @@ OQS_API OQS_STATUS OQS_KEM_encaps(const OQS_KEM *kem, uint8_t *ciphertext, uint8
 	}
 }
 
+OQS_API OQS_STATUS OQS_KEM_encaps_custom_secret_CPA(const OQS_KEM *kem, const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key) {
+    if (kem == NULL) {
+        return OQS_ERROR;
+    } else {
+        return kem->encaps_custom_secret_CPA(input_message, ciphertext, shared_secret, public_key);
+    }
+}
+
+OQS_API OQS_STATUS OQS_KEM_encaps_custom_secret_CCA(const OQS_KEM *kem, const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key) {
+    if (kem == NULL) {
+        return OQS_ERROR;
+    } else {
+        return kem->encaps_custom_secret_CCA(input_message, ciphertext, shared_secret, public_key);
+    }
+}
+
 OQS_API OQS_STATUS OQS_KEM_decaps(const OQS_KEM *kem, uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key) {
 	if (kem == NULL) {
 		return OQS_ERROR;
 	} else {
 		return kem->decaps(shared_secret, ciphertext, secret_key);
 	}
+}
+
+OQS_API OQS_STATUS OQS_KEM_decaps_custom_secret_CPA(const OQS_KEM *kem, uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key) {
+    if (kem == NULL) {
+        return OQS_ERROR;
+    } else {
+        return kem->decaps_custom_secret_CPA(shared_secret, ciphertext, secret_key);
+    }
+}
+
+OQS_API OQS_STATUS OQS_KEM_decaps_custom_secret_CCA(const OQS_KEM *kem, uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key) {
+    if (kem == NULL) {
+        return OQS_ERROR;
+    } else {
+        return kem->decaps_custom_secret_CCA(shared_secret, ciphertext, secret_key);
+    }
 }
 
 OQS_API void OQS_KEM_free(OQS_KEM *kem) {

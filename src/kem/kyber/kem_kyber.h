@@ -25,7 +25,11 @@ OQS_KEM *OQS_KEM_kyber_768_new(void);
 OQS_API OQS_STATUS OQS_KEM_kyber_768_keypair(uint8_t *public_key, uint8_t *secret_key);
 OQS_API OQS_STATUS OQS_KEM_kyber_768_keypair_based_on_input(uint8_t *key_input, uint8_t *public_key, uint8_t *secret_key);
 OQS_API OQS_STATUS OQS_KEM_kyber_768_encaps(uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
+OQS_API OQS_STATUS OQS_KEM_kyber_768_encaps_custom_secret_CPA(const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
+OQS_API OQS_STATUS OQS_KEM_kyber_768_encaps_custom_secret_CCA(const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
 OQS_API OQS_STATUS OQS_KEM_kyber_768_decaps(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
+OQS_API OQS_STATUS OQS_KEM_kyber_768_decaps_custom_secret_CPA(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
+OQS_API OQS_STATUS OQS_KEM_kyber_768_decaps_custom_secret_CCA(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
 #endif
 
 #ifdef OQS_ENABLE_KEM_kyber_1024

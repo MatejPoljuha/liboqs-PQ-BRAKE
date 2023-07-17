@@ -191,6 +191,36 @@ typedef struct OQS_KEM {
 	 */
 	OQS_STATUS (*encaps)(uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
 
+    /**
+	 * MODIFIED - Encapsulation algorithm, custom shared secret (message) input.
+	 *
+	 * Caller is responsible for allocating sufficient memory for `ciphertext` and
+	 * `shared_secret`, based on the `length_*` members in this object or the per-scheme
+	 * compile-time macros `OQS_KEM_*_length_*`.
+	 *
+     * @param[in] input_message The shared secret represented as a byte string.
+	 * @param[out] ciphertext The ciphertext (encapsulation) represented as a byte string.
+	 * @param[out] shared_secret The shared secret represented as a byte string.
+	 * @param[in] public_key The public key represented as a byte string.
+	 * @return OQS_SUCCESS or OQS_ERROR
+	 */
+    OQS_STATUS (*encaps_custom_secret_CPA)(const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
+
+    /**
+	 * MODIFIED - Encapsulation algorithm, custom shared secret (message) input.
+	 *
+	 * Caller is responsible for allocating sufficient memory for `ciphertext` and
+	 * `shared_secret`, based on the `length_*` members in this object or the per-scheme
+	 * compile-time macros `OQS_KEM_*_length_*`.
+	 *
+     * @param[in] input_message The shared secret represented as a byte string.
+	 * @param[out] ciphertext The ciphertext (encapsulation) represented as a byte string.
+	 * @param[out] shared_secret The shared secret represented as a byte string.
+	 * @param[in] public_key The public key represented as a byte string.
+	 * @return OQS_SUCCESS or OQS_ERROR
+	 */
+    OQS_STATUS (*encaps_custom_secret_CCA)(const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
+
 	/**
 	 * Decapsulation algorithm.
 	 *
@@ -204,6 +234,34 @@ typedef struct OQS_KEM {
 	 * @return OQS_SUCCESS or OQS_ERROR
 	 */
 	OQS_STATUS (*decaps)(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
+
+    /**
+	 * MODIFIED - Decapsulation algorithm.
+	 *
+	 * Caller is responsible for allocating sufficient memory for `shared_secret`, based
+	 * on the `length_*` members in this object or the per-scheme compile-time macros
+	 * `OQS_KEM_*_length_*`.
+	 *
+	 * @param[out] shared_secret The shared secret represented as a byte string.
+	 * @param[in] ciphertext The ciphertext (encapsulation) represented as a byte string.
+	 * @param[in] secret_key The secret key represented as a byte string.
+	 * @return OQS_SUCCESS or OQS_ERROR
+	 */
+    OQS_STATUS (*decaps_custom_secret_CPA)(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
+
+    /**
+	 * MODIFIED - Decapsulation algorithm.
+	 *
+	 * Caller is responsible for allocating sufficient memory for `shared_secret`, based
+	 * on the `length_*` members in this object or the per-scheme compile-time macros
+	 * `OQS_KEM_*_length_*`.
+	 *
+	 * @param[out] shared_secret The shared secret represented as a byte string.
+	 * @param[in] ciphertext The ciphertext (encapsulation) represented as a byte string.
+	 * @param[in] secret_key The secret key represented as a byte string.
+	 * @return OQS_SUCCESS or OQS_ERROR
+	 */
+    OQS_STATUS (*decaps_custom_secret_CCA)(uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
 
 } OQS_KEM;
 
@@ -263,6 +321,22 @@ OQS_API OQS_STATUS OQS_KEM_keypair_based_on_input(uint8_t *key_input, const OQS_
 OQS_API OQS_STATUS OQS_KEM_encaps(const OQS_KEM *kem, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
 
 /**
+ * MODIFIED - Encapsulation algorithm.
+ *
+ * Caller is responsible for allocating sufficient memory for `ciphertext` and
+ * `shared_secret`, based on the `length_*` members in this object or the per-scheme
+ * compile-time macros `OQS_KEM_*_length_*`.
+ *
+ * @param[in] kem The shared secret represented as a byte string.
+ * @param[in] input_message The OQS_KEM object representing the KEM.
+ * @param[out] ciphertext The ciphertext (encapsulation) represented as a byte string.
+ * @param[out] shared_secret The shared secret represented as a byte string.
+ * @param[in] public_key The public key represented as a byte string.
+ * @return OQS_SUCCESS or OQS_ERROR
+ */
+OQS_API OQS_STATUS OQS_KEM_encaps_custom_secret(const OQS_KEM *kem, const uint8_t *input_message, uint8_t *ciphertext, uint8_t *shared_secret, const uint8_t *public_key);
+
+/**
  * Decapsulation algorithm.
  *
  * Caller is responsible for allocating sufficient memory for `shared_secret`, based
@@ -276,6 +350,21 @@ OQS_API OQS_STATUS OQS_KEM_encaps(const OQS_KEM *kem, uint8_t *ciphertext, uint8
  * @return OQS_SUCCESS or OQS_ERROR
  */
 OQS_API OQS_STATUS OQS_KEM_decaps(const OQS_KEM *kem, uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
+
+/**
+ * MODIFIED - Decapsulation algorithm.
+ *
+ * Caller is responsible for allocating sufficient memory for `shared_secret`, based
+ * on the `length_*` members in this object or the per-scheme compile-time macros
+ * `OQS_KEM_*_length_*`.
+ *
+ * @param[in] kem The OQS_KEM object representing the KEM.
+ * @param[out] shared_secret The shared secret represented as a byte string.
+ * @param[in] ciphertext The ciphertext (encapsulation) represented as a byte string.
+ * @param[in] secret_key The secret key represented as a byte string.
+ * @return OQS_SUCCESS or OQS_ERROR
+ */
+OQS_API OQS_STATUS OQS_KEM_decaps_custom_secret(const OQS_KEM *kem, uint8_t *shared_secret, const uint8_t *ciphertext, const uint8_t *secret_key);
 
 /**
  * Frees an OQS_KEM object that was constructed by OQS_KEM_new.

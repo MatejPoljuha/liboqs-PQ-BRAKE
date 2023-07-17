@@ -1,8 +1,8 @@
 /*
  * example_kem.c
  *
- * Minimal example of a Diffie-Hellman-style post-quantum key encapsulation
- * implemented in liboqs.
+ * MODIFIED - Minimal example of a Diffie-Hellman-style post-quantum key encapsulation
+ * implemented in liboqs, MODIFIED to check the new functionality of using a custom shared message/shared secret.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -19,10 +19,6 @@ void cleanup_stack(uint8_t *secret_key, size_t secret_key_len,
                    uint8_t *shared_secret_e, uint8_t *shared_secret_d,
                    size_t shared_secret_len);
 
-void cleanup_heap(uint8_t *secret_key, uint8_t *shared_secret_e,
-                  uint8_t *shared_secret_d, uint8_t *public_key,
-                  uint8_t *ciphertext, OQS_KEM *kem);
-
 /* This function gives an example of the operations performed by both
  * the decapsulator and the encapsulator in a single KEM session,
  * using only compile-time macros and allocating variables
@@ -37,8 +33,9 @@ void cleanup_heap(uint8_t *secret_key, uint8_t *shared_secret_e,
  * <oqs/oqsconfig.h>, which is included in <oqs/oqs.h>, contains macros
  * indicating which algorithms were enabled when this instance of liboqs
  * was compiled.
+ * MODIFIED - uses the new CPA-only encap/decap functions
  */
-static OQS_STATUS example_stack(void) {
+static OQS_STATUS CPA_example_stack(void) {
 #ifndef OQS_ENABLE_KEM_kyber_768 // if Kyber-768 was not enabled at compile-time
 	printf("[example_stack] OQS_KEM_kyber_768 was not enabled at "
 	       "compile-time.\n");
@@ -50,8 +47,9 @@ static OQS_STATUS example_stack(void) {
 	uint8_t shared_secret_e[OQS_KEM_kyber_768_length_shared_secret];
 	uint8_t shared_secret_d[OQS_KEM_kyber_768_length_shared_secret];
 
-	OQS_STATUS rc = OQS_KEM_kyber_768_keypair(public_key, secret_key);
-	if (rc != OQS_SUCCESS) {
+	OQS_STATUS rc_cpa = OQS_KEM_kyber_768_keypair(public_key, secret_key);
+
+	if (rc_cpa != OQS_SUCCESS) {
 		fprintf(stderr, "ERROR: OQS_KEM_kyber_768_keypair failed!\n");
 		cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
 		              shared_secret_e, shared_secret_d,
@@ -59,17 +57,33 @@ static OQS_STATUS example_stack(void) {
 
 		return OQS_ERROR;
 	}
-	rc = OQS_KEM_kyber_768_encaps(ciphertext, shared_secret_e, public_key);
-	if (rc != OQS_SUCCESS) {
-		fprintf(stderr, "ERROR: OQS_KEM_kyber_768_encaps failed!\n");
-		cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
-		              shared_secret_e, shared_secret_d,
-		              OQS_KEM_kyber_768_length_shared_secret);
 
-		return OQS_ERROR;
-	}
-	rc = OQS_KEM_kyber_768_decaps(shared_secret_d, ciphertext, secret_key);
-	if (rc != OQS_SUCCESS) {
+    /* Modified version of above code block to test the new custom shared secret functionality, we just use 0,1,2,...,31 as the input */
+    int fill_buf;
+    uint8_t custom_shared_secret[2*32];
+    for (fill_buf = 0; fill_buf < 32; fill_buf++) {
+        custom_shared_secret[fill_buf] = fill_buf;
+    }
+
+    printf("\n-----------------------------------------------------------------------------");
+    printf("\nCPA-only variant: ");
+    printf("\n-----------------------------------------------------------------------------");
+    printf("\nENCAPSULATION: ");
+
+    rc_cpa = OQS_KEM_kyber_768_encaps_custom_secret_CPA(custom_shared_secret, ciphertext, shared_secret_e, public_key);
+    if (rc_cpa != OQS_SUCCESS) {
+        fprintf(stderr, "ERROR: OQS_KEM_kyber_768_encaps failed!\n");
+        cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
+                      shared_secret_e, shared_secret_d,
+                      OQS_KEM_kyber_768_length_shared_secret);
+
+        return OQS_ERROR;
+    }
+
+    printf("\nDECAPSULATION: ");
+
+    rc_cpa = OQS_KEM_kyber_768_decaps_custom_secret_CPA(shared_secret_d, ciphertext, secret_key);
+	if (rc_cpa != OQS_SUCCESS) {
 		fprintf(stderr, "ERROR: OQS_KEM_kyber_768_decaps failed!\n");
 		cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
 		              shared_secret_e, shared_secret_d,
@@ -77,85 +91,75 @@ static OQS_STATUS example_stack(void) {
 
 		return OQS_ERROR;
 	}
-	printf("[example_stack] OQS_KEM_kyber_768 operations completed.\n");
-
+    printf("\n-----------------------------------------------------------------------------");
 	return OQS_SUCCESS; // success!
 #endif
 }
 
-/* This function gives an example of the operations performed by both
- * the decapsulator and the encapsulator in a single KEM session,
- * allocating variables dynamically on the heap and calling the generic
- * OQS_KEM object.
- *
- * This does not require the use of compile-time macros to check if the
- * algorithm in question was enabled at compile-time; instead, the caller
- * must check that the OQS_KEM object returned is not NULL.
- */
-static OQS_STATUS example_heap(void) {
-	OQS_KEM *kem = NULL;
-	uint8_t *public_key = NULL;
-	uint8_t *secret_key = NULL;
-	uint8_t *ciphertext = NULL;
-	uint8_t *shared_secret_e = NULL;
-	uint8_t *shared_secret_d = NULL;
+static OQS_STATUS CCA_example_stack(void) {
+#ifndef OQS_ENABLE_KEM_kyber_768 // if Kyber-768 was not enabled at compile-time
+    printf("[example_stack] OQS_KEM_kyber_768 was not enabled at "
+	       "compile-time.\n");
+	return OQS_SUCCESS; // nothing done successfully ;-)
+#else
+    uint8_t public_key[OQS_KEM_kyber_768_length_public_key];
+    uint8_t secret_key[OQS_KEM_kyber_768_length_secret_key];
+    uint8_t ciphertext[OQS_KEM_kyber_768_length_ciphertext];
+    uint8_t shared_secret_e[OQS_KEM_kyber_768_length_shared_secret];
+    uint8_t shared_secret_d[OQS_KEM_kyber_768_length_shared_secret];
 
-	kem = OQS_KEM_new(OQS_KEM_alg_kyber_768);
-	if (kem == NULL) {
-		printf("[example_heap]  OQS_KEM_kyber_768 was not enabled at "
-		       "compile-time.\n");
-		return OQS_SUCCESS;
-	}
+    OQS_STATUS rc_cca = OQS_KEM_kyber_768_keypair(public_key, secret_key);
 
-	public_key = malloc(kem->length_public_key);
-	secret_key = malloc(kem->length_secret_key);
-	ciphertext = malloc(kem->length_ciphertext);
-	shared_secret_e = malloc(kem->length_shared_secret);
-	shared_secret_d = malloc(kem->length_shared_secret);
-	if ((public_key == NULL) || (secret_key == NULL) || (ciphertext == NULL) ||
-	        (shared_secret_e == NULL) || (shared_secret_d == NULL)) {
-		fprintf(stderr, "ERROR: malloc failed!\n");
-		cleanup_heap(secret_key, shared_secret_e, shared_secret_d, public_key,
-		             ciphertext, kem);
+    if (rc_cca != OQS_SUCCESS) {
+        fprintf(stderr, "ERROR: OQS_KEM_kyber_768_keypair failed!\n");
+        cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
+                      shared_secret_e, shared_secret_d,
+                      OQS_KEM_kyber_768_length_shared_secret);
 
-		return OQS_ERROR;
-	}
+        return OQS_ERROR;
+    }
 
-	OQS_STATUS rc = OQS_KEM_keypair(kem, public_key, secret_key);
-	if (rc != OQS_SUCCESS) {
-		fprintf(stderr, "ERROR: OQS_KEM_keypair failed!\n");
-		cleanup_heap(secret_key, shared_secret_e, shared_secret_d, public_key,
-		             ciphertext, kem);
+    /* Modified version of above code block to test the new custom shared secret functionality, we just use 0,1,2,...,31 as the input */
+    int fill_buf;
+    uint8_t custom_shared_secret[2*32];
+    for (fill_buf = 0; fill_buf < 32; fill_buf++) {
+        custom_shared_secret[fill_buf] = fill_buf;
+    }
 
-		return OQS_ERROR;
-	}
-	rc = OQS_KEM_encaps(kem, ciphertext, shared_secret_e, public_key);
-	if (rc != OQS_SUCCESS) {
-		fprintf(stderr, "ERROR: OQS_KEM_encaps failed!\n");
-		cleanup_heap(secret_key, shared_secret_e, shared_secret_d, public_key,
-		             ciphertext, kem);
+    printf("\n\n-----------------------------------------------------------------------------");
+    printf("\nCCA variant: ");
+    printf("\n-----------------------------------------------------------------------------");
+    printf("\nENCAPSULATION: ");
 
-		return OQS_ERROR;
-	}
-	rc = OQS_KEM_decaps(kem, shared_secret_d, ciphertext, secret_key);
-	if (rc != OQS_SUCCESS) {
-		fprintf(stderr, "ERROR: OQS_KEM_decaps failed!\n");
-		cleanup_heap(secret_key, shared_secret_e, shared_secret_d, public_key,
-		             ciphertext, kem);
+    rc_cca = OQS_KEM_kyber_768_encaps_custom_secret_CCA(custom_shared_secret, ciphertext, shared_secret_e, public_key);
+    if (rc_cca != OQS_SUCCESS) {
+        fprintf(stderr, "ERROR: OQS_KEM_kyber_768_encaps failed!\n");
+        cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
+                      shared_secret_e, shared_secret_d,
+                      OQS_KEM_kyber_768_length_shared_secret);
 
-		return OQS_ERROR;
-	}
+        return OQS_ERROR;
+    }
 
-	printf("[example_heap]  OQS_KEM_kyber_768 operations completed.\n");
-	cleanup_heap(secret_key, shared_secret_e, shared_secret_d, public_key,
-	             ciphertext, kem);
+    printf("\nDECAPSULATION: ");
+    rc_cca = OQS_KEM_kyber_768_decaps_custom_secret_CCA(shared_secret_d, ciphertext, secret_key);
+    if (rc_cca != OQS_SUCCESS) {
+        fprintf(stderr, "ERROR: OQS_KEM_kyber_768_decaps failed!\n");
+        cleanup_stack(secret_key, OQS_KEM_kyber_768_length_secret_key,
+                      shared_secret_e, shared_secret_d,
+                      OQS_KEM_kyber_768_length_shared_secret);
 
-	return OQS_SUCCESS; // success
+        return OQS_ERROR;
+    }
+    printf("\n-----------------------------------------------------------------------------");
+    return OQS_SUCCESS; // success!
+#endif
 }
 
 int main(void) {
 	OQS_init();
-	if (example_stack() == OQS_SUCCESS && example_heap() == OQS_SUCCESS) {
+	if (CPA_example_stack() == OQS_SUCCESS && CCA_example_stack() == OQS_SUCCESS) {
+        printf("\nEncapsulation, Decapsulation successful.\n(uncomment the print lines in the underlying encap/decap_CPA/CCA functions to see the values of the input message and output shared secrets.)");
 		OQS_destroy();
 		return EXIT_SUCCESS;
 	} else {
@@ -170,17 +174,4 @@ void cleanup_stack(uint8_t *secret_key, size_t secret_key_len,
 	OQS_MEM_cleanse(secret_key, secret_key_len);
 	OQS_MEM_cleanse(shared_secret_e, shared_secret_len);
 	OQS_MEM_cleanse(shared_secret_d, shared_secret_len);
-}
-
-void cleanup_heap(uint8_t *secret_key, uint8_t *shared_secret_e,
-                  uint8_t *shared_secret_d, uint8_t *public_key,
-                  uint8_t *ciphertext, OQS_KEM *kem) {
-	if (kem != NULL) {
-		OQS_MEM_secure_free(secret_key, kem->length_secret_key);
-		OQS_MEM_secure_free(shared_secret_e, kem->length_shared_secret);
-		OQS_MEM_secure_free(shared_secret_d, kem->length_shared_secret);
-	}
-	OQS_MEM_insecure_free(public_key);
-	OQS_MEM_insecure_free(ciphertext);
-	OQS_KEM_free(kem);
 }
